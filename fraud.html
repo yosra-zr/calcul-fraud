@@ -86,13 +86,13 @@ function calculateFraudRisk() {
     // 3. Incohérence mathématique du solde
     const expectedNewBalance = oldBalance - amount;
     if (type !== 'CASH_IN' && Math.abs(newBalance - expectedNewBalance) > 0.01 && newBalance === 0) {
-        score += 1,5;
+        score += 15;
         indicators.push("Anomalie transactionnelle : Le montant retiré dépasse ou ne correspond pas à la baisse logique du solde.");
     }
 
     // 4. Seuil légal de détection automatique
     if (amount >= 200000) {
-        score += 2;
+        score += 20;
         indicators.push("Montant supérieur au seuil critique de surveillance de fraude financière (200k€).");
     }
 
