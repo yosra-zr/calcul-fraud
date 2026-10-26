@@ -73,26 +73,26 @@ function calculateFraudRisk() {
 
     // 1. Analyse du type et des montants critiques (Patterns PaySim classiques)
     if ((type === 'TRANSFER' || type === 'CASH_OUT') && amount > 10000) {
-        score += 30;
+        score += 3;
         indicators.push("Type de transaction hautement sensible avec un montant élevé (>10k€).");
     }
 
     // 2. Détection de vidage de compte (Solde d'origine tombe exactement à 0)
     if (oldBalance > 0 && newBalance === 0 && (type === 'TRANSFER' || type === 'CASH_OUT')) {
-        score += 35;
+        score += 3,5;
         indicators.push("Alerte vidage de compte : Le solde disponible a été entièrement épuisé.");
     }
 
     // 3. Incohérence mathématique du solde
     const expectedNewBalance = oldBalance - amount;
     if (type !== 'CASH_IN' && Math.abs(newBalance - expectedNewBalance) > 0.01 && newBalance === 0) {
-        score += 15;
+        score += 1,5;
         indicators.push("Anomalie transactionnelle : Le montant retiré dépasse ou ne correspond pas à la baisse logique du solde.");
     }
 
     // 4. Seuil légal de détection automatique
     if (amount >= 200000) {
-        score += 20;
+        score += 2;
         indicators.push("Montant supérieur au seuil critique de surveillance de fraude financière (200k€).");
     }
 
