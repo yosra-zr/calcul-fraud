@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur de Risque de Fraude Financière</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #1e3a8a; font-size: 24px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #4b5563; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .result-box { margin-top: 25px; padding: 20px; border-radius: 6px; display: none; text-align: center; }
+        .safe { background-color: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+        .warning { background-color: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+        .danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+        .score { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .details { text-align: left; font-size: 14px; margin-top: 10px; list-style-type: square; padding-left: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Analyseur de Transaction Financière</h1>
+    
+    <div class="form-group">
+        <label for="type">Type de Transaction</label>
+        <select id="type">
+            <option value="TRANSFER">Virement (Transfer)</option>
+            <option value="CASH_OUT">Retrait (Cash Out)</option>
+            <option value="PAYMENT">Paiement en ligne (Payment)</option>
+            <option value="CASH_IN">Dépôt (Cash In)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="amount">Montant de la Transaction (€)</label>
+        <input type="number" id="amount" placeholder="Ex: 15000" min="0" step="0.01">
+    </div>
+
+    <div class="form-group">
+        <label for="oldBalance">Solde Avant Transaction (€)</label>
+        <input type="number" id="oldBalance" placeholder="Ex: 5000" min="0" step="0.01">
+    </div>
+
+    <div class="form-group">
+        <label for="newBalance">Solde Après Transaction (€)</label>
+        <input type="number" id="newBalance" placeholder="Ex: 0" min="0" step="0.01">
+    </div>
+
+    <button onclick="calculateFraudRisk()">Analyser le risque</button>
+
+    <div id="result" class="result-box">
+        <div id="resultTitle" style="font-weight: bold; font-size: 18px;">Analyse Terminée</div>
+        <div class="score" id="riskScore">0%</div>
+        <div id="riskLevel" style="font-weight: 600;">Risque Faible</div>
+        <ul class="details" id="riskDetails"></ul>
+    </div>
+</div>
+
+<script>
+function calculateFraudRisk() {
+    const type = document.getElementById('type').value;
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const oldBalance = parseFloat(document.getElementById('oldBalance').value) || 0;
+    const newBalance = parseFloat(document.getElementById('newBalance').value) || 0;
+
+    let score = 0;
+    let indicators = [];
+
+    // 1. Analyse du type et des montants critiques (Patterns PaySim classiques)
+    if ((type === 'TRANSFER' || type === 'CASH_OUT') && amount > 10000) {
+        score += 30;
+        indicators.push("Type de transaction hautement sensible avec un montant élevé (>10k€).");
+    }
+
+    // 2. Détection de vidage de compte (Solde d'origine tombe exactement à 0)
+    if (oldBalance > 0 && newBalance === 0 && (type === 'TRANSFER' || type === 'CASH_OUT')) {
+        score += 35;
+        indicators.push("Alerte vidage de compte : Le solde disponible a été entièrement épuisé.");
+    }
+
+    // 3. Incohérence mathématique du solde
+    const expectedNewBalance = oldBalance - amount;
+    if (type !== 'CASH_IN' && Math.abs(newBalance - expectedNewBalance) > 0.01 && newBalance === 0) {
+        score += 15;
+        indicators.push("Anomalie transactionnelle : Le montant retiré dépasse ou ne correspond pas à la baisse logique du solde.");
+    }
+
+    // 4. Seuil légal de détection automatique
+    if (amount >= 200000) {
+        score += 20;
+        indicators.push("Montant supérieur au seuil critique de surveillance de fraude financière (200k€).");
+    }
+
+    // 5. Test de la loi de Benford (Indicateur de falsification de chiffres)
+    const firstDigit = amount.toString().replace(/[^1-9]/g, '')[0];
+    if (firstDigit === '9' || firstDigit === '8') {
+        score += 5; // Les montants frauduleux ou forcés commencent statistiquement plus souvent par de grands chiffres
+    }
+
+    // Normalisation du score max à 100%
+    score = Math.min(score, 100);
+
+    // Affichage des résultats
+    const resultDiv = document.getElementById('result');
+    const scoreDiv = document.getElementById('riskScore');
+    const levelDiv = document.getElementById('riskLevel');
+    const detailsList = document.getElementById('riskDetails');
+
+    resultDiv.style.display = 'block';
+    scoreDiv.innerText = score + '%';
+    detailsList.innerHTML = '';
+
+    // Nettoyage des classes de couleur
+    resultDiv.className = 'result-box';
+
+    if (score < 35) {
+        resultDiv.classList.add('safe');
+        levelDiv.innerText = 'Niveau de Risque : FAIBLE';
+    } else if (score < 65) {
+        resultDiv.classList.add('warning');
+        levelDiv.innerText = 'Niveau de Risque : MODÉRÉ / SUSPECT';
+    } else {
+        resultDiv.classList.add('danger');
+        levelDiv.innerText = 'Niveau de Risque : CRITIQUE / FRAUDE PROBABLE';
+    }
+
+    // Remplissage des détails
+    if (indicators.length === 0) {
+        detailsList.innerHTML = '<li>Aucun comportement suspect détecté selon les règles financières standards.</li>';
+    } else {
+        indicators.forEach(ind => {
+            let li = document.createElement('li');
+            li.innerText = ind;
+            detailsList.appendChild(li);
+        });
+    }
+}
+</script>
+
+</body>
+</html>
